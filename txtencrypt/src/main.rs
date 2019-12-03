@@ -73,14 +73,13 @@ fn main() {
             let mut filename = String::new();
             io::stdin().read_line(&mut filename).expect("failed to read line");
 
-            decrypt(key, nonce, filename);
+            decrypt(key.trim().to_string(), nonce.trim().to_string(), filename.trim().to_string());
 
         }
     }
 
-    //println!("Your keys and nonces have been written to keys.txt. Don't lose them.");
+    println!("Your keys and nonces have been written to keys.txt. Don't lose them.");
 
-    //println!("Do you want to decrypt a file?")
 }
 
 
@@ -217,7 +216,7 @@ fn rand_key() -> String {
         f.read_to_end(&mut cyphertext).expect("failed to read your encrypted file to a string");
 
         println!("writing the decrypted contents of {} to decrypted.txt", filename);
-        let mut f2 = match File::open("decrypted.txt") {
+        let mut f2 = match OpenOptions::new().read(true).write(true).open("decrypted.txt") {
             Ok(file) => {
                 file
             }
@@ -247,6 +246,14 @@ fn rand_key() -> String {
 
         let decryptedtext: Vec<u8> = aead.decrypt(thenonce, cyphertext.as_ref()).expect("Couldn't decrypt file!");
 
-        f2.write_all(&decryptedtext[..]).expect("couldn't write the decrypted text to decrypted.txt");
+        match f2.write_all(&decryptedtext[..]) {
+            Ok(file) => {
+                file
+            }
+            Err(e) => {
+                println!("wasn't able to write the decrypted text to decrypted.txt: {}",e);
+                println!("Here is your decrypted text: \n {:?}", &decryptedtext);
+            }
+        }
 
     }
