@@ -33,6 +33,39 @@ fn main() {
             let mut outputfile = String::new();
             io::stdin().read_line(&mut outputfile).expect("failed to read line");
 
+            println!("Do you want to generate a random key of type in your own? (type r for random, w to type it in yourself)");
+            let mut randorwrite = String::new();
+            io::stdin().read_line(&mut randorwrite).expect("failed to read line");
+            let r_or_w: pull::rw = pull::RandomOrType::new(randorwrite.trim().to_string());
+
+            let mut key = String::new();
+            let mut nonce = String::new();
+            match r_or_w {
+                pull::rw::r => {
+                    key = rand_key();
+                }
+                pull::rw::w => {
+                    println!("Type in the key that you want to encrypt the file with.");
+                    io::stdin().read_line(&mut key).expect("failed to read line");
+                    key = pull::Key::new(key);
+                }
+            }
+
+            println!("Do you want to generate a random nonce (recomended), or write one in yourself?");
+            let mut randorwrite = String::new();
+            io::stdin().read_line(&mut randorwrite).expect("failed to read line");
+            let r_or_w = pull::RandomOrType::new(randorwrite.trim().to_string());
+            match r_or_w {
+                pull::rw::r => {
+                    nonce = rand_nonce();
+                }
+                pull::rw::w => {
+                    println!("Type in the nonce that you want to encrypt the file with.");
+                    io::stdin().read_line(&mut nonce).expect("failed to read line");
+                    nonce = pull::Nonce::new(nonce);
+                }
+            }
+
             //////////////////////////////////////////////////////////////////////
             //parsing the variables to the function encrypt()/////////////////////
             //////////////////////////////////////////////////////////////////////
@@ -63,12 +96,10 @@ fn main() {
                 }
             };
         
-            let key = rand_key();
-            let nonce = rand_nonce();
             let mut encryptme: Vec<u8> = Vec::new();
             f.read_to_end(&mut encryptme).expect("Could not read the file encryptme.txt to a string. Are you root?");  //dumps the contents of encryptme.txt into the string encryptme
         
-            encrypt(key.clone(), nonce.clone(), encryptme.clone(), outputfile.clone().trim().to_string());
+            encrypt(key.clone().trim().to_string(), nonce.trim().clone().to_string(), encryptme.clone(), outputfile.clone().trim().to_string());
             ///////////////////////////////////////////////////////////////////
             ///////////////////////////////////////////////////////////////////
         
@@ -95,9 +126,6 @@ fn main() {
             decrypt(key.trim().to_string(), nonce.trim().to_string(), filename.trim().to_string(),outputfile.trim().to_string());
         }
     }
-
-    println!("Your keys and nonces have been written to keys.txt. Don't lose them.");
-
 }
 
 
@@ -152,6 +180,7 @@ fn rand_nonce() -> String {
     };
 
     f.write(&format!("  Your nonce is {}", rand_string).as_bytes()[..]).expect("could not write nonce to keys.txt");
+    println!("your nonce has been writen to keys.txt");
     f.sync_all().expect("could not sync_all for nonce");
     rand_string
 }
@@ -192,6 +221,7 @@ fn rand_key() -> String {
     };
 
     f.write(&format!("  your key is {}", rand_string).as_bytes()[..]).expect("failed to write your key to keys.txt");
+    println!("Your key has been written to keys.txt.");
     f.sync_all().expect("could not sync_all for key");
 
 
